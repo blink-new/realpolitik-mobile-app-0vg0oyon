@@ -4,8 +4,8 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { Calendar, DollarSign, Target, User, CheckCircle } from 'lucide-react-native';
 import PlanProgress from '@/components/PlanProgress';
-import Comments from '@/components/Comments';
 import { useNotifications } from '@/contexts/NotificationContext';
+import CommentSection from '@/components/CommentSection';
 
 // This would normally come from a database or API
 const PLAN_DETAILS = {
@@ -32,20 +32,27 @@ const PLAN_DETAILS = {
     ],
     comments: [
       {
-        id: '1',
-        author: 'John Citizen',
-        text: 'This is a fantastic idea! It would make a huge difference for my family.',
-        date: 'Mar 10, 2024',
-        userType: 'public',
-        avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
+        id: 'c1',
+        author: 'Citizen1',
+        authorType: 'citizen',
+        content: 'Great plan! I support this.',
+        timestamp: '2 hours ago',
       },
       {
-        id: '2',
+        id: 'c2',
         author: 'Senator Jane Smith',
-        text: 'Thank you for your support, John! We are working hard to make this a reality.',
-        date: 'Mar 11, 2024',
-        userType: 'politician',
-        avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
+        authorType: 'politician',
+        content: 'Thank you for your support! We are working hard to make this a reality.',
+        timestamp: '1 hour ago',
+        replies: [
+          {
+            id: 'r1',
+            author: 'Citizen2',
+            authorType: 'citizen',
+            content: 'How will this be funded?',
+            timestamp: '30 minutes ago',
+          },
+        ],
       },
     ],
   },
@@ -70,6 +77,15 @@ const PLAN_DETAILS = {
       { date: 'Jan 20, 2024', text: 'Bill introduced in the House.' },
       { date: 'Feb 10, 2024', text: 'Referred to the Committee on Energy and Commerce.' },
     ],
+    comments: [
+      {
+        id: 'c3',
+        author: 'Citizen3',
+        authorType: 'citizen',
+        content: 'This is a much-needed initiative.',
+        timestamp: '1 day ago',
+      },
+    ],
   },
   '3': {
     title: 'Small Business Tax Relief Program',
@@ -89,6 +105,7 @@ const PLAN_DETAILS = {
       { phase: 'Implementation', timeline: 'Q1 2025', description: 'Begin tax relief program rollout', completed: false },
     ],
     progressUpdates: [],
+    comments: [],
   },
   '4': {
     title: 'National Infrastructure Modernization',
@@ -110,6 +127,7 @@ const PLAN_DETAILS = {
     progressUpdates: [
       { date: 'Jan 25, 2024', text: 'Bipartisan working group formed to draft the bill.' },
     ],
+    comments: [],
   },
 };
 
@@ -142,9 +160,31 @@ export default function PlanDetailsScreen() {
     );
   };
 
-  const handleCommentSubmit = (newComment) => {
-    // In a real app, this would be saved to a database
-    console.log('New comment submitted:', newComment);
+  const handleAddComment = (content: string, parentId?: string) => {
+    const newComment = {
+      id: `c${Math.random().toString(36).substring(2, 9)}`,
+      author: 'Current User', // Replace with actual user name
+      authorType: 'citizen', // Replace with actual user type
+      content,
+      timestamp: 'Just now',
+    };
+
+    setPlanDetails(prevDetails => {
+      if (!prevDetails) return prevDetails;
+
+      const updatedComments = [...prevDetails.comments];
+      if (parentId) {
+        const parentCommentIndex = updatedComments.findIndex(c => c.id === parentId);
+        if (parentCommentIndex !== -1) {
+          const parentComment = { ...updatedComments[parentCommentIndex] };
+          parentComment.replies = parentComment.replies ? [...parentComment.replies, newComment] : [newComment];
+          updatedComments[parentCommentIndex] = parentComment;
+        }
+      } else {
+        updatedComments.push(newComment);
+      }
+      return { ...prevDetails, comments: updatedComments };
+    });
   };
 
   const renderContent = () => {
@@ -197,8 +237,6 @@ export default function PlanDetailsScreen() {
           </View>
 
           <Text style={styles.lastUpdated}>Last updated: {planDetails.lastUpdated}</Text>
-
-          <Comments comments={planDetails.comments} onCommentSubmit={handleCommentSubmit} />
         </>
       );
     }
@@ -209,6 +247,14 @@ export default function PlanDetailsScreen() {
           status={planDetails.status} 
           milestones={planDetails.keyMilestones}
           onCompleteMilestone={handleCompleteMilestone}
+        />
+      );
+    }
+    if (activeTab === 'comments') {
+      return (
+        <CommentSection 
+          comments={planDetails.comments}
+          onAddComment={handleAddComment}
         />
       );
     }
@@ -250,6 +296,12 @@ export default function PlanDetailsScreen() {
             onPress={() => setActiveTab('progress')}
           >
             <Text style={[styles.tabText, activeTab === 'progress' && styles.activeTabText]}>Progress</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'comments' && styles.activeTab]}
+            onPress={() => setActiveTab('comments')}
+          >
+            <Text style={[styles.tabText, activeTab === 'comments' && styles.activeTabText]}>Comments</Text>
           </TouchableOpacity>
         </View>
 

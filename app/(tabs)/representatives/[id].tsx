@@ -6,6 +6,7 @@ import { ChevronLeft, Mail, Phone, Star, CheckCircle, Award, Building, MapPin, C
 import { router } from 'expo-router';
 import PoliticianPlans from '@/components/PoliticianPlans';
 import { useNotifications } from '@/contexts/NotificationContext';
+import Polls from '@/components/Polls';
 
 const MOCK_REPRESENTATIVES = [
   {
@@ -128,6 +129,9 @@ export default function RepresentativeProfileScreen() {
     if (activeTab === 'plans') {
       return <PoliticianPlans />;
     }
+    if (activeTab === 'polls') {
+      return <Polls />;
+    }
   };
 
   const handleFollowToggle = () => {
@@ -200,6 +204,12 @@ export default function RepresentativeProfileScreen() {
             onPress={() => setActiveTab('plans')}
           >
             <Text style={[styles.tabText, activeTab === 'plans' && styles.activeTabText]}>Plans</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'polls' && styles.activeTab]}
+            onPress={() => setActiveTab('polls')}
+          >
+            <Text style={[styles.tabText, activeTab === 'polls' && styles.activeTabText]}>Polls</Text>
           </TouchableOpacity>
         </View>
 

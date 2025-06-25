@@ -24,6 +24,7 @@ export default function RootLayout() {
           <Stack.Screen name="recommend-idea" options={{ presentation: 'modal' }} />
           <Stack.Screen name="news-details" options={{ presentation: 'modal' }} />
           <Stack.Screen name="post-news" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="create-poll" options={{ presentation: 'modal' }} />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar style="auto" />

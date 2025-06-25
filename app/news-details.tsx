@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { User, Calendar, Tag } from 'lucide-react-native';
-import Comments from '@/components/Comments';
+import CommentSection from '@/components/CommentSection';
 
 const NEWS_DETAILS = {
   '1': {
@@ -17,14 +17,8 @@ const NEWS_DETAILS = {
     issues: ['Healthcare', 'Legislation'],
     type: 'Announcement',
     comments: [
-      {
-        id: '1',
-        author: 'Healthcare Advocate',
-        text: 'This is a monumental step forward for our country. Thank you, Senator Smith!',
-        date: 'Mar 15, 2024',
-        userType: 'public',
-        avatar: 'https://randomuser.me/api/portraits/women/3.jpg',
-      },
+      { id: 'nc1', author: 'Citizen A', authorType: 'citizen', content: 'Great news! This is what we need.', timestamp: '2 hours ago' },
+      { id: 'nc2', author: 'Senator Jane Smith', authorType: 'politician', content: 'Thank you for your support!', timestamp: '1 hour ago' },
     ],
   },
   '2': {
@@ -38,14 +32,7 @@ const NEWS_DETAILS = {
     issues: ['Budget', 'Scandal'],
     type: 'Scandal',
     comments: [
-      {
-        id: '1',
-        author: 'Concerned Citizen',
-        text: 'This is a clear example of mismanagement. We need to hold our elected officials accountable.',
-        date: 'Mar 14, 2024',
-        userType: 'public',
-        avatar: 'https://randomuser.me/api/portraits/men/3.jpg',
-      },
+      { id: 'nc3', author: 'Citizen B', authorType: 'citizen', content: 'This is unacceptable!', timestamp: '1 day ago' },
     ],
   },
   '3': {
@@ -59,16 +46,7 @@ const NEWS_DETAILS = {
     politician: 'Rep. Michael Johnson',
     issues: ['Staffing', 'Resignation'],
     type: 'Personnel Change',
-    comments: [
-      {
-        id: '1',
-        author: 'Disappointed Voter',
-        text: 'This is a clear sign of a dysfunctional office. We need to demand better from our representatives.',
-        date: 'Mar 12, 2024',
-        userType: 'public',
-        avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
-      },
-    ],
+    comments: [],
   },
   '4': {
     id: '4',
@@ -81,24 +59,15 @@ const NEWS_DETAILS = {
     politician: 'Presidential Administration',
     issues: ['Appointments', 'Environment'],
     type: 'Personnel Change',
-    comments: [
-      {
-        id: '1',
-        author: 'Environmental Activist',
-        text: 'This is a huge step forward for our country. We need to continue to push for more action on climate change.',
-        date: 'Mar 10, 2024',
-        userType: 'public',
-        avatar: 'https://randomuser.me/api/portraits/men/2.jpg',
-      },
-    ],
+    comments: [],
   },
 };
 
 export default function NewsDetailsScreen() {
   const { id } = useLocalSearchParams();
-  const newsItem = NEWS_DETAILS[id as string];
+  const [newsItemDetails, setNewsItemDetails] = useState(NEWS_DETAILS[id as string]);
 
-  if (!newsItem) {
+  if (!newsItemDetails) {
     return (
       <View style={styles.container}>
         <Text>News item not found.</Text>
@@ -106,9 +75,31 @@ export default function NewsDetailsScreen() {
     );
   }
 
-  const handleCommentSubmit = (newComment) => {
-    // In a real app, this would be saved to a database
-    console.log('New comment submitted:', newComment);
+  const handleAddComment = (content: string, parentId?: string) => {
+    const newComment = {
+      id: `c${Math.random().toString(36).substring(2, 9)}`,
+      author: 'Current User', // Replace with actual user name
+      authorType: 'citizen', // Replace with actual user type
+      content,
+      timestamp: 'Just now',
+    };
+
+    setNewsItemDetails(prevDetails => {
+      if (!prevDetails) return prevDetails;
+
+      const updatedComments = [...prevDetails.comments];
+      if (parentId) {
+        const parentCommentIndex = updatedComments.findIndex(c => c.id === parentId);
+        if (parentCommentIndex !== -1) {
+          const parentComment = { ...updatedComments[parentCommentIndex] };
+          parentComment.replies = parentComment.replies ? [...parentComment.replies, newComment] : [newComment];
+          updatedComments[parentCommentIndex] = parentComment;
+        }
+      } else {
+        updatedComments.push(newComment);
+      }
+      return { ...prevDetails, comments: updatedComments };
+    });
   };
 
   return (
@@ -121,29 +112,29 @@ export default function NewsDetailsScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <Image source={{ uri: newsItem.image }} style={styles.newsImage} />
+      <Image source={{ uri: newsItemDetails.image }} style={styles.newsImage} />
 
       <View style={styles.content}>
-        <Text style={styles.newsType}>{newsItem.type}</Text>
-        <Text style={styles.newsTitle}>{newsItem.title}</Text>
+        <Text style={styles.newsType}>{newsItemDetails.type}</Text>
+        <Text style={styles.newsTitle}>{newsItemDetails.title}</Text>
 
         <View style={styles.metaInfo}>
           <View style={styles.metaItem}>
             <User size={16} color="#8E8E93" />
-            <Text style={styles.metaText}>{newsItem.author}</Text>
+            <Text style={styles.metaText}>{newsItemDetails.author}</Text>
           </View>
           <View style={styles.metaItem}>
             <Calendar size={16} color="#8E8E93" />
-            <Text style={styles.metaText}>{newsItem.date}</Text>
+            <Text style={styles.metaText}>{newsItemDetails.date}</Text>
           </View>
         </View>
 
-        <Text style={styles.fullContent}>{newsItem.fullContent}</Text>
+        <Text style={styles.fullContent}>{newsItemDetails.fullContent}</Text>
 
         <View style={styles.issuesContainer}>
           <Text style={styles.issuesLabel}>Related Issues:</Text>
           <View style={styles.issueTags}>
-            {newsItem.issues.map((issue, index) => (
+            {newsItemDetails.issues.map((issue, index) => (
               <View key={index} style={styles.issueTag}>
                 <Tag size={14} color="#667eea" />
                 <Text style={styles.issueText}>{issue}</Text>
@@ -152,7 +143,7 @@ export default function NewsDetailsScreen() {
           </View>
         </View>
 
-        <Comments comments={newsItem.comments} onCommentSubmit={handleCommentSubmit} />
+        <CommentSection comments={newsItemDetails.comments} onAddComment={handleAddComment} />
       </View>
     </ScrollView>
   );
